@@ -76,7 +76,9 @@ console.log(X);
 console.log(HEAP);
 
 console.log("Evaluate Program");
-Instructions.evaluateInstructions(programInstructions, HEAP, X);
+try {
+	Instructions.evaluateInstructions(programInstructions, HEAP, X);
+} catch(e) { console.log("[ERROR] " + e); }
 console.log(X);
 console.log(HEAP);
 

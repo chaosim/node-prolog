@@ -1,0 +1,106 @@
+XDUMP:
+1:	<str, HEAP[8]>
+2:	<ref, HEAP[2]>
+3:	<str, HEAP[1]>
+4:	<str, HEAP[5]>
+5:	<ref, HEAP[3]>
+6:	f(X[7])
+7:	a()
+
+HDUMP[12]:
+0:	<str, HEAP[1]>
+1:	<h/2>
+2:	<ref, HEAP[2]>
+3:	<ref, HEAP[3]>
+4:	<str, HEAP[5]>
+5:	<f/1>
+6:	<ref, HEAP[3]>
+7:	<str, HEAP[8]>
+8:	<p/3>
+9:	<ref, HEAP[2]>
+10:	<str, HEAP[1]>
+11:	<str, HEAP[5]>
+
+
+
+get_structure p/3 X[1]
+	deref(X1) = <str, HEAP[8]>;
+	S = 9;
+	MODE = READ;
+
+unify_variable X[2]
+	X2: <ref, HEAP[2]>
+	S = 10
+
+unify_variable X[3],
+	X3: <str ,HEAP[1]>
+	S = 11
+
+unify_variable X[4],
+	X4: <str, HEAP[5]>
+	S = 12
+
+get_structure f/1 X[2],
+	deref(X2) = <ref, HEAP[2]>
+	HEAP[12] = <str, HEAP[13]>
+	HEAP[13] = <f/1>
+
+	BIND(<ref, HEAP[2]>, <ref, HEAP[12]>);
+
+	H = 14
+	MODE = WRITE;
+
+unify_variable X[5],
+	HEAP[14] = <ref, HEAP[14]>
+	X[5] = <ref, HEAP[14]>
+	H = 15
+	S = 13
+
+get_structure h/2 X[3],
+	deref(X[3]) = <str, HEAP[1]>;
+	S = 2
+	MODE = READ
+
+unify_value X[4],
+	<throw unimplemented>
+
+unify_variable X[6],
+get_structure f/1 X[6],
+unify_variable X[7],
+get_structure a/0 X[7]
+
+
+
+
+
+
+
+END STATE:
+XDUMP:
+1:	<str, HEAP[8]>
+2:	<ref, HEAP[2]>
+3:	<str, HEAP[1]>
+4:	<str, HEAP[5]>
+5:	<ref, HEAP[14]>
+6:	f(X[7])
+7:	a()
+
+HDUMP[12]:
+0:	<str, HEAP[1]>
+1:	<h/2>
+2:	<ref, HEAP[2]>
+3:	<ref, HEAP[3]>
+4:	<str, HEAP[5]>
+5:	<f/1>
+6:	<ref, HEAP[3]>
+7:	<str, HEAP[8]>
+8:	<p/3>
+9:	<ref, HEAP[2]>
+10:	<str, HEAP[1]>
+11:	<str, HEAP[5]>
+12:	<str, HEAP[13]>
+13:	<f/1>
+14:	<ref, HEAP[14]>
+
+
+
