@@ -82,6 +82,12 @@ console.log(ENV.X());
 console.log(ENV.HEAP());
 
 
+/**
+ * Try to rebuild the term.
+ **/
+var Utils = require("./lib/utils");
+console.log(Utils.rebuildTermFromHeap(new StoreRef(ENV.HEAP(), 8)).inspect());
+
 
 
 
