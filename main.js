@@ -5,6 +5,7 @@ var Structures          = require("./lib/structures");
 var StoreRef            = Structures.StoreRef;
 var CompleteStructure   = Structures.CompleteStructure;
 var Variable   			= Structures.Variable;
+var Utils 				= require("./lib/utils");
 
 /** 
  * Load the Instructions.
@@ -85,8 +86,16 @@ console.log(ENV.HEAP());
 /**
  * Try to rebuild the term.
  **/
-var Utils = require("./lib/utils");
-console.log(Utils.rebuildTermFromHeap(new StoreRef(ENV.HEAP(), 8)).inspect());
+// Need to hardcode the heap address where the entry point ends up :-(
+var result = Utils.rebuildTermFromHeap(new StoreRef(ENV.HEAP(), 8));
+
+console.log("\n\nResults: ");
+console.log("Query Term:\t p(Z, h(Z,W), f(W)).");
+console.log("Query Term:\t p(f(X), h(Y, f(a)), Y).");
+
+// The correct answer should be: p( f(f(a)), h( f(f(a)),f(a) ), f(f(a)) )
+console.log("MGU:\t\t " + result.inspect() + ".");
+
 
 
 
