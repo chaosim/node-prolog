@@ -71,13 +71,13 @@ console.log(programInstructions);
  * Begin the evaluation by evaluating the QUERY.
  **/
 console.log("Evaluate Query");
-Instructions.evaluateInstructions(queryInstructions, ENV);
+Instructions.evaluateInstructions(queryInstructions, ENV, true);
 console.log(ENV.X());
 console.log(ENV.HEAP());
 
 console.log("Evaluate Program");
 try {
-	Instructions.evaluateInstructions(programInstructions, ENV);
+	Instructions.evaluateInstructions(programInstructions, ENV, true);
 } catch(e) { console.log("[ERROR] " + e); }
 console.log(ENV.X());
 console.log(ENV.HEAP());
