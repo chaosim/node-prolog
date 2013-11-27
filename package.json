@@ -7,7 +7,7 @@
   "bin": {},
   "scripts": {
     "main":"node main.js",
-    "test":"./node_modules/.bin/mocha spec --reporter list --require should"
+    "test":"./node_modules/.bin/mocha tests --reporter list --require should"
   },
   "main": "./lib/http-server",
   "repository": {
