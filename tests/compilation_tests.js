@@ -30,7 +30,7 @@ describe("Query Compilation", function(){
 		ENV.X().set(4, new CompleteStructure("f", 1, [new StoreRef(ENV.X(),5)]));
 		ENV.X().set(5, new Variable("W", new StoreRef(ENV.X(),5)));
 		var flattened = [ 3, 4, 1 ];
-		var queryInstructions = Compiler.CompileLoadedQuery(ENV.X(), flattened);
+		var queryInstructions = Compiler.CompileLoadedQuery(ENV, flattened);
 
 		var expectedInstructions = [
 			new Instructions.put_structure("h", 2, new StoreRef(ENV.X(), 3)), 	// put_structure h/2 X[3],

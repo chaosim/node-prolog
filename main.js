@@ -75,7 +75,7 @@ function Failure1(DEBUG) {
 	/**
 	 * Compile the argument registers into query instructions
 	 **/
-	var queryInstructions = Compiler.CompileLoadedQuery(ENV.X(), flattened);
+	var queryInstructions = Compiler.CompileLoadedQuery(ENV, flattened);
 	console.log(ENV.X());
 	console.log("Query Instructions:");
 	console.log(queryInstructions);
@@ -128,6 +128,13 @@ function Failure1(DEBUG) {
 
 	// The correct answer should be: p( _H1 )
 	console.log("MGU:\t\t " + result.inspect() + ".");
+
+	// Get the variable bindings
+	console.log("BINDINGS: ");
+	var queryVariables = ENV.getQueryVariableBindings();
+	for(var symbol in queryVariables) {
+		console.log(symbol + ": " + Utils.rebuildTermFromHeap(queryVariables[symbol]));
+	}
 }
 
 /**
@@ -155,7 +162,7 @@ function UnifyTwoVariables(DEBUG) {
 	/**
 	 * Compile the argument registers into query instructions
 	 **/
-	var queryInstructions = Compiler.CompileLoadedQuery(ENV.X(), flattened);
+	var queryInstructions = Compiler.CompileLoadedQuery(ENV, flattened);
 	console.log(ENV.X());
 	console.log("Query Instructions:");
 	console.log(queryInstructions);
@@ -206,7 +213,14 @@ function UnifyTwoVariables(DEBUG) {
 
 	// The correct answer should be: p( _H1 )
 	console.log("MGU:\t\t " + result.inspect() + ".");
-}
+
+	// Get the variable bindings
+	console.log("BINDINGS: ");
+	var queryVariables = ENV.getQueryVariableBindings();
+	for(var symbol in queryVariables) {
+		console.log(symbol + ": " + Utils.rebuildTermFromHeap(queryVariables[symbol]));
+	}
+} 
 
 
 /**
@@ -237,7 +251,7 @@ function WamBookExample(DEBUG) {
 	/**
 	 * Compile the argument registers into query instructions
 	 **/
-	var queryInstructions = Compiler.CompileLoadedQuery(ENV.X(), flattened);
+	var queryInstructions = Compiler.CompileLoadedQuery(ENV, flattened);
 	console.log(ENV.X());
 	console.log("Query Instructions:");
 	console.log(queryInstructions);
@@ -293,6 +307,13 @@ function WamBookExample(DEBUG) {
 
 	// The correct answer should be: p( f(f(a)), h( f(f(a)),f(a) ), f(f(a)) )
 	console.log("MGU:\t\t " + result.inspect() + ".");
+
+	// Get the variable bindings
+	console.log("BINDINGS: ");
+	var queryVariables = ENV.getQueryVariableBindings();
+	for(var symbol in queryVariables) {
+		console.log(symbol + ": " + Utils.rebuildTermFromHeap(queryVariables[symbol]));
+	}
 }
 
 
