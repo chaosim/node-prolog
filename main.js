@@ -139,8 +139,8 @@ function UnifyTwoVariables(DEBUG) {
  **/
 function WamBookExample(DEBUG) {
 
-	console.log("Query Term:\t p(A).");
-	console.log("Query Term:\t p(Z).");
+	console.log("Query Term:\t p(Z, h(Z,W), f(W)).");
+	console.log("Query Term:\t p(f(X), h(Y, f(a)), Y).");
 	var ENV = Utils.BuildAndRun(
 		DEBUG, 
 		// Prepare the query
