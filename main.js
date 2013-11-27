@@ -21,7 +21,8 @@ var DEBUG = false;
 var exampleNames = {
 	"main":WamBookExample,
 	"2var":UnifyTwoVariables,
-	"fail1":Failure1
+	"fail1":Failure1,
+	"vi":VariableIndependance
 };
 
 /**
@@ -57,7 +58,7 @@ function printUsage() {
 function Failure1(DEBUG) {
 
 	console.log("Query Term:\t p(A,f(b)).");
-	console.log("Query Term:\t p(b,f(c)).");
+	console.log("Program Term:\t p(b,f(c)).");
 	var ENV = Utils.BuildAndRun(
 		DEBUG, 
 		// Prepare the query
@@ -92,6 +93,49 @@ function Failure1(DEBUG) {
 }
 
 /**
+ * Try unifying terms that shows that variable names are scoped only to the query.
+ * Query: 			p(a, b, X).
+ * Program: 		p(X, b, c).
+ * Expected Result: X = c
+ **/
+function VariableIndependance(DEBUG) {
+
+	console.log("Query Term:\t p(a, b, X).");
+	console.log("Program Term:\t p(X, b, c).");
+	var ENV = Utils.BuildAndRun(
+		DEBUG, 
+		// Prepare the query
+		function(ENV){
+			/**
+			 * Parse and Flatten the Query: 
+			 * 		?- p(a, b, X).
+			 *
+			 * Currently no code for this step :-(
+			 **/
+			ENV.X().set(1, new CompleteStructure("p",3,[new StoreRef(ENV.X(),2), new StoreRef(ENV.X(), 3), new StoreRef(ENV.X(), 4)]));
+			ENV.X().set(2, new CompleteStructure("a",0,[]));
+			ENV.X().set(3, new CompleteStructure("b",0,[]));
+			ENV.X().set(4, new Variable("X"));
+			return [ 3, 2, 1 ]; // return the flattened register order.
+		},
+		// Prepare the program.
+		function(ENV){
+			/**
+			 * Compile and Flatten the Program:
+			 *		p(X, b, c).
+			 *
+			 * Currently no code for this step :-( 
+			 **/
+			ENV.X().set(1, new CompleteStructure("p",3, [new StoreRef(ENV.X(),2), new StoreRef(ENV.X(),3), new StoreRef(ENV.X(),4)]));
+			ENV.X().set(2, new Variable("X"));
+			ENV.X().set(3, new CompleteStructure("b",0,[]));
+			ENV.X().set(4, new CompleteStructure("c",0,[]));
+			return [ 1,3,4 ];
+		}
+	);
+}
+
+/**
  * Try a basic unification of two variables.
  * Query: 			p(A).
  * Program: 		p(Z).
@@ -100,7 +144,7 @@ function Failure1(DEBUG) {
 function UnifyTwoVariables(DEBUG) {
 	
 	console.log("Query Term:\t p(A).");
-	console.log("Query Term:\t p(Z).");
+	console.log("Program Term:\t p(Z).");
 	var ENV = Utils.BuildAndRun(
 		DEBUG, 
 		// Prepare the query
@@ -140,7 +184,7 @@ function UnifyTwoVariables(DEBUG) {
 function WamBookExample(DEBUG) {
 
 	console.log("Query Term:\t p(Z, h(Z,W), f(W)).");
-	console.log("Query Term:\t p(f(X), h(Y, f(a)), Y).");
+	console.log("Program Term:\t p(f(X), h(Y, f(a)), Y).");
 	var ENV = Utils.BuildAndRun(
 		DEBUG, 
 		// Prepare the query

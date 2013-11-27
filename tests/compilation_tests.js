@@ -9,87 +9,225 @@ var Compiler 			= require("../lib/compilers");
 /**
  * A Test Suite for The L0 WAM Compilation.
  **/
-describe("Query Compilation", function(){
-	var ENV = null;
+describe("L0 Compiler", function(){
+	/**
+	 * A Test Suite for The L0 WAM Query Compilation.
+	 **/
+	describe("Query Compilation", function(){
+		var ENV = null;
 
-	beforeEach(function(){
-		ENV = new Structures.Env();	
+		beforeEach(function(){
+			ENV = new Structures.Env();	
+		});
+
+		/** 
+		 * The Failure1 Query is: 
+		 * 		?- p(A,f(b)).
+		 **/
+		it("should compile the Failure1 query", function(){
+			ENV.X().set(1, new CompleteStructure("p",2,[new StoreRef(ENV.X(),2), new StoreRef(ENV.X(), 3)]));
+			ENV.X().set(2, new Variable("A", new StoreRef(ENV.X(),2)));
+			ENV.X().set(3, new CompleteStructure("f",1,[new StoreRef(ENV.X(), 4)]));
+			ENV.X().set(4, new CompleteStructure("b",0,[]));
+			var flattened = [ 4, 3, 1 ];
+			var queryInstructions = Compiler.CompileLoadedQuery(ENV, flattened);
+
+			var expectedInstructions = [
+				new Instructions.put_structure("b", 0, new StoreRef(ENV.X(), 4)), 	// put_structure b/0 X[4]
+				new Instructions.put_structure("f", 1, new StoreRef(ENV.X(), 3)), 	// put_structure f/1 X[3],
+				new Instructions.set_value(new StoreRef(ENV.X(), 4)), 				// set_value X[4],
+				new Instructions.put_structure("p", 2, new StoreRef(ENV.X(), 1)), 	// put_structure p/2 X[1],
+				new Instructions.set_variable(new StoreRef(ENV.X(), 2)), 			// set_variable X[2],
+				new Instructions.set_value(new StoreRef(ENV.X(), 3)) 				// set_value X[3]
+			];
+
+			compareInstructionLists(expectedInstructions, queryInstructions);
+		});
+
+		/** 
+		 * The VariableIndependance Query is: 
+		 * 		?- p(a, b, X).
+		 **/
+		it("should compile the VariableIndependance query", function(){
+			ENV.X().set(1, new CompleteStructure("p",3,[new StoreRef(ENV.X(),2), new StoreRef(ENV.X(), 3), new StoreRef(ENV.X(), 4)]));
+			ENV.X().set(2, new CompleteStructure("a",0,[]));
+			ENV.X().set(3, new CompleteStructure("b",0,[]));
+			ENV.X().set(4, new Variable("X"));
+			var flattened = [ 3, 2, 1 ];
+			var queryInstructions = Compiler.CompileLoadedQuery(ENV, flattened);
+
+			var expectedInstructions = [
+				new Instructions.put_structure("b", 0, new StoreRef(ENV.X(), 3)), 	// put_structure b/0 X[3],
+				new Instructions.put_structure("a", 0, new StoreRef(ENV.X(), 2)), 	// put_structure a/0 X[2],
+				new Instructions.put_structure("p", 3, new StoreRef(ENV.X(), 1)), 	// put_structure p/3 X[1],
+				new Instructions.set_value(new StoreRef(ENV.X(), 2)), 				// set_value X[2],
+				new Instructions.set_value(new StoreRef(ENV.X(), 3)), 				// set_value X[3],
+				new Instructions.set_variable(new StoreRef(ENV.X(), 4)) 			// set_variable X[4]
+			];
+
+			compareInstructionLists(expectedInstructions, queryInstructions);
+		});
+
+		/** 
+		 * The UnifyTwoVariables Query is: 
+		 * 		?- p(A).
+		 **/
+		it("should compile the UnifyTwoVariables query", function(){
+			ENV.X().set(1, new CompleteStructure("p",1,[new StoreRef(ENV.X(),2)]));
+			ENV.X().set(2, new Variable("A", new StoreRef(ENV.X(),2)));
+			var flattened = [ 1 ];
+			var queryInstructions = Compiler.CompileLoadedQuery(ENV, flattened);
+
+			var expectedInstructions = [
+				new Instructions.put_structure("p", 1, new StoreRef(ENV.X(), 1)), 	// put_structure p/1 X[1],
+				new Instructions.set_variable(new StoreRef(ENV.X(), 2)) 			// set_variable X[2]
+			];
+
+			compareInstructionLists(expectedInstructions, queryInstructions);
+		});
+
+		/**
+		 * The example query from the wambook is: 
+		 *		?- p(Z, h(Z,W), f(W)).
+		 **/
+		it("should compile the WAMBook example query", function(){
+			ENV.X().set(1, new CompleteStructure("p",3,[new StoreRef(ENV.X(),2), new StoreRef(ENV.X(),3), new StoreRef(ENV.X(),4)]));
+			ENV.X().set(2, new Variable("Z", new StoreRef(ENV.X(),2)));
+			ENV.X().set(3, new CompleteStructure("h", 2, [new StoreRef(ENV.X(),2), new StoreRef(ENV.X(),5)]));
+			ENV.X().set(4, new CompleteStructure("f", 1, [new StoreRef(ENV.X(),5)]));
+			ENV.X().set(5, new Variable("W", new StoreRef(ENV.X(),5)));
+			var flattened = [ 3, 4, 1 ];
+			var queryInstructions = Compiler.CompileLoadedQuery(ENV, flattened);
+
+			var expectedInstructions = [
+				new Instructions.put_structure("h", 2, new StoreRef(ENV.X(), 3)), 	// put_structure h/2 X[3],
+				new Instructions.set_variable(new StoreRef(ENV.X(), 2)), 			// set_variable X[2],
+				new Instructions.set_variable(new StoreRef(ENV.X(), 5)), 			// set_variable X[5],
+				new Instructions.put_structure("f", 1, new StoreRef(ENV.X(), 4)), 	// put_structure f/1 X[4],
+				new Instructions.set_value(new StoreRef(ENV.X(), 5)), 				// set_value X[5],
+				new Instructions.put_structure("p", 3, new StoreRef(ENV.X(), 1)), 	// put_structure p/3 X[1],
+				new Instructions.set_value(new StoreRef(ENV.X(), 2)), 				// set_value X[2],
+				new Instructions.set_value(new StoreRef(ENV.X(), 3)), 				// set_value X[3],
+				new Instructions.set_value(new StoreRef(ENV.X(), 4)) 				// set_value X[4]
+			];
+
+			compareInstructionLists(expectedInstructions, queryInstructions);
+		});
+
 	});
 
 	/**
-	 * The example query from the wambook is: 
-	 *		?- p(Z, h(Z,W), f(W)).
-	 *
-	 * This test hard codes the parsed, flattened version and pipes it into compile.
-	 * It then checks the resulting instructions against the known L0 WAM Instructions.
+	 * A Test Suite for The L0 WAM Program Compilation.
 	 **/
-	it("should compile the WAMBook example query", function(){
-		ENV.X().set(1, new CompleteStructure("p",3,[new StoreRef(ENV.X(),2), new StoreRef(ENV.X(),3), new StoreRef(ENV.X(),4)]));
-		ENV.X().set(2, new Variable("Z", new StoreRef(ENV.X(),2)));
-		ENV.X().set(3, new CompleteStructure("h", 2, [new StoreRef(ENV.X(),2), new StoreRef(ENV.X(),5)]));
-		ENV.X().set(4, new CompleteStructure("f", 1, [new StoreRef(ENV.X(),5)]));
-		ENV.X().set(5, new Variable("W", new StoreRef(ENV.X(),5)));
-		var flattened = [ 3, 4, 1 ];
-		var queryInstructions = Compiler.CompileLoadedQuery(ENV, flattened);
+	describe("Program Compilation", function(){
+		var ENV = null;
 
-		var expectedInstructions = [
-			new Instructions.put_structure("h", 2, new StoreRef(ENV.X(), 3)), 	// put_structure h/2 X[3],
-			new Instructions.set_variable(new StoreRef(ENV.X(), 2)), 			// set_variable X[2],
-			new Instructions.set_variable(new StoreRef(ENV.X(), 5)), 			// set_variable X[5],
-			new Instructions.put_structure("f", 1, new StoreRef(ENV.X(), 4)), 	// put_structure f/1 X[4],
-			new Instructions.set_value(new StoreRef(ENV.X(), 5)), 				// set_value X[5],
-			new Instructions.put_structure("p", 3, new StoreRef(ENV.X(), 1)), 	// put_structure p/3 X[1],
-			new Instructions.set_value(new StoreRef(ENV.X(), 2)), 				// set_value X[2],
-			new Instructions.set_value(new StoreRef(ENV.X(), 3)), 				// set_value X[3],
-			new Instructions.set_value(new StoreRef(ENV.X(), 4)) 				// set_value X[4]
-		];
+		beforeEach(function(){
+			ENV = new Structures.Env();	
+		});
 
-		compareInstructionLists(expectedInstructions, queryInstructions);
-	});
+		/** 
+		 * The Failure1 Program is: 
+		 * 		p(b,f(c)).
+		 **/
+		it("should compile the Failure1 program", function(){
+			ENV.X().set(1, new CompleteStructure("p",2,[new StoreRef(ENV.X(),2), new StoreRef(ENV.X(), 3)]));
+			ENV.X().set(2, new CompleteStructure("b",0,[]));
+			ENV.X().set(3, new CompleteStructure("f",1,[new StoreRef(ENV.X(), 4)]));
+			ENV.X().set(4, new CompleteStructure("c",0,[]));
+			var flattened = [ 1,2,3,4 ];
+			var programInstructions = Compiler.CompileLoadedProgram(ENV.X(), flattened);
 
-});
+			var expectedInstructions = [
+				new Instructions.get_structure("p", 2, new StoreRef(ENV.X(), 1)), 	// get_structure p/2 X[1]
+				new Instructions.unify_variable(new StoreRef(ENV.X(), 2)), 			// unify_variable X[2]
+				new Instructions.unify_variable(new StoreRef(ENV.X(), 3)), 			// unify_variable X[3]
+				new Instructions.get_structure("b", 0, new StoreRef(ENV.X(), 2)), 	// get_structure b/0 X[2]
+				new Instructions.get_structure("f", 1, new StoreRef(ENV.X(), 3)), 	// get_structure f/1 X[3]
+				new Instructions.unify_variable(new StoreRef(ENV.X(), 4)), 			// unify_variable X[4]
+				new Instructions.get_structure("c", 0, new StoreRef(ENV.X(), 4)) 	// get_structure c/0 X[4]
+			];
 
-describe("Program Compilation", function(){
-	var ENV = null;
+			compareInstructionLists(expectedInstructions, programInstructions);
+		});
 
-	beforeEach(function(){
-		ENV = new Structures.Env();	
-	});
+		/** 
+		 * The VariableIndependance Program is: 
+		 * 		p(X, b, c).
+		 **/
+		it("should compile the VariableIndependance program", function(){
+			ENV.X().set(1, new CompleteStructure("p",3, [new StoreRef(ENV.X(),2), new StoreRef(ENV.X(),3), new StoreRef(ENV.X(),4)]));
+			ENV.X().set(2, new Variable("X"));
+			ENV.X().set(3, new CompleteStructure("b",0,[]));
+			ENV.X().set(4, new CompleteStructure("c",0,[]));
+			var flattened = [ 1,3,4 ];
+			var programInstructions = Compiler.CompileLoadedProgram(ENV.X(), flattened);
 
-	/**
-	 * The example program from the wambook is: 
-	 *		p(f(X), h(Y, f(a)), Y).
-	 *
-	 * This test hard codes the parsed, flattened version and pipes it into compile.
-	 * It then checks the resulting instructions against the known L0 WAM Instructions.
-	 **/
-	it("should compile the WAMBook example program", function(){
-		ENV.X().set(1, new CompleteStructure("p",3,[new StoreRef(ENV.X(),2), new StoreRef(ENV.X(),3), new StoreRef(ENV.X(),4)]));
-		ENV.X().set(2, new CompleteStructure("f",1,[new StoreRef(ENV.X(),5)]));
-		ENV.X().set(3, new CompleteStructure("h",2,[new StoreRef(ENV.X(),4), new StoreRef(ENV.X(),6)]));
-		ENV.X().set(4, new Variable("Y", new StoreRef(ENV.X(),4)));
-		ENV.X().set(5, new Variable("X", new StoreRef(ENV.X(),5)));
-		ENV.X().set(6, new CompleteStructure("f",1,[new StoreRef(ENV.X(),7)]));
-		ENV.X().set(7, new CompleteStructure("a",0,[]));
-		flattened = [1,2,3,6,7];
-		var programInstructions = Compiler.CompileLoadedProgram(ENV.X(), flattened);
+			var expectedInstructions = [
+				new Instructions.get_structure("p", 3, new StoreRef(ENV.X(), 1)), 	// get_structure p/3 X[1]
+				new Instructions.unify_variable(new StoreRef(ENV.X(), 2)), 			// unify_variable X[2]
+				new Instructions.unify_variable(new StoreRef(ENV.X(), 3)), 			// unify_variable X[3]
+				new Instructions.unify_variable(new StoreRef(ENV.X(), 4)), 			// unify_variable X[4]
+				new Instructions.get_structure("b", 0, new StoreRef(ENV.X(), 3)), 	// get_structure b/0 X[3]
+				new Instructions.get_structure("c", 0, new StoreRef(ENV.X(), 4)) 	// get_structure c/0 X[4]
+			];
 
-		var expectedInstructions = [
-			new Instructions.get_structure("p", 3, new StoreRef(ENV.X(), 1)), 	// get_structure p/3 X[1]
-			new Instructions.unify_variable(new StoreRef(ENV.X(), 2)), 			// unify_variable X[2]
-			new Instructions.unify_variable(new StoreRef(ENV.X(), 3)), 			// unify_variable X[3]
-			new Instructions.unify_variable(new StoreRef(ENV.X(), 4)), 			// unify_variable X[4]
-			new Instructions.get_structure("f", 1, new StoreRef(ENV.X(), 2)), 	// get_structure f/1 X[2]
-			new Instructions.unify_variable(new StoreRef(ENV.X(), 5)), 			// unify_variable X[5]
-			new Instructions.get_structure("h", 2, new StoreRef(ENV.X(), 3)), 	// get_structure h/2 X[3]
-			new Instructions.unify_value(new StoreRef(ENV.X(), 4)), 			// unify_value X[4]
-			new Instructions.unify_variable(new StoreRef(ENV.X(), 6)), 			// unify_variable X[6]
-			new Instructions.get_structure("f", 1, new StoreRef(ENV.X(), 6)), 	// get_structure f/1 X[6]
-			new Instructions.unify_variable(new StoreRef(ENV.X(), 7)), 			// unify_variable X[7]
-			new Instructions.get_structure("a", 0, new StoreRef(ENV.X(), 7)) 	// get_structure f/1 X[7]
-		];
+			compareInstructionLists(expectedInstructions, programInstructions);
+		});
 
-		compareInstructionLists(expectedInstructions, programInstructions);
+		/** 
+		 * The UnifyTwoVariables Program is: 
+		 * 		p(Z).
+		 **/
+		it("should compile the UnifyTwoVariables program", function(){
+			ENV.X().set(1, new CompleteStructure("p",1,[new StoreRef(ENV.X(),2)]));
+			ENV.X().set(2, new Variable("Z", new StoreRef(ENV.X(),2)));
+			var flattened = [1];
+			var programInstructions = Compiler.CompileLoadedProgram(ENV.X(), flattened);
+
+			var expectedInstructions = [
+				new Instructions.get_structure("p", 1, new StoreRef(ENV.X(), 1)), 	// get_structure p/1 X[1]
+				new Instructions.unify_variable(new StoreRef(ENV.X(), 2)) 			// unify_variable X[2]
+			];
+
+			compareInstructionLists(expectedInstructions, programInstructions);
+		});
+
+		/**
+		 * The example program from the wambook is: 
+		 *		p(f(X), h(Y, f(a)), Y).
+		 *
+		 * This test hard codes the parsed, flattened version and pipes it into compile.
+		 * It then checks the resulting instructions against the known L0 WAM Instructions.
+		 **/
+		it("should compile the WAMBook example program", function(){
+			ENV.X().set(1, new CompleteStructure("p",3,[new StoreRef(ENV.X(),2), new StoreRef(ENV.X(),3), new StoreRef(ENV.X(),4)]));
+			ENV.X().set(2, new CompleteStructure("f",1,[new StoreRef(ENV.X(),5)]));
+			ENV.X().set(3, new CompleteStructure("h",2,[new StoreRef(ENV.X(),4), new StoreRef(ENV.X(),6)]));
+			ENV.X().set(4, new Variable("Y", new StoreRef(ENV.X(),4)));
+			ENV.X().set(5, new Variable("X", new StoreRef(ENV.X(),5)));
+			ENV.X().set(6, new CompleteStructure("f",1,[new StoreRef(ENV.X(),7)]));
+			ENV.X().set(7, new CompleteStructure("a",0,[]));
+			flattened = [1,2,3,6,7];
+			var programInstructions = Compiler.CompileLoadedProgram(ENV.X(), flattened);
+
+			var expectedInstructions = [
+				new Instructions.get_structure("p", 3, new StoreRef(ENV.X(), 1)), 	// get_structure p/3 X[1]
+				new Instructions.unify_variable(new StoreRef(ENV.X(), 2)), 			// unify_variable X[2]
+				new Instructions.unify_variable(new StoreRef(ENV.X(), 3)), 			// unify_variable X[3]
+				new Instructions.unify_variable(new StoreRef(ENV.X(), 4)), 			// unify_variable X[4]
+				new Instructions.get_structure("f", 1, new StoreRef(ENV.X(), 2)), 	// get_structure f/1 X[2]
+				new Instructions.unify_variable(new StoreRef(ENV.X(), 5)), 			// unify_variable X[5]
+				new Instructions.get_structure("h", 2, new StoreRef(ENV.X(), 3)), 	// get_structure h/2 X[3]
+				new Instructions.unify_value(new StoreRef(ENV.X(), 4)), 			// unify_value X[4]
+				new Instructions.unify_variable(new StoreRef(ENV.X(), 6)), 			// unify_variable X[6]
+				new Instructions.get_structure("f", 1, new StoreRef(ENV.X(), 6)), 	// get_structure f/1 X[6]
+				new Instructions.unify_variable(new StoreRef(ENV.X(), 7)), 			// unify_variable X[7]
+				new Instructions.get_structure("a", 0, new StoreRef(ENV.X(), 7)) 	// get_structure f/1 X[7]
+			];
+
+			compareInstructionLists(expectedInstructions, programInstructions);
+		});
 	});
 });
 
