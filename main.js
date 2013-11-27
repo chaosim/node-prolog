@@ -133,7 +133,7 @@ function Failure1(DEBUG) {
 	console.log("BINDINGS: ");
 	var queryVariables = ENV.getQueryVariableBindings();
 	for(var symbol in queryVariables) {
-		console.log(symbol + ": " + Utils.rebuildTermFromHeap(queryVariables[symbol]));
+		console.log(symbol + ": " + Utils.rebuildTermFromHeap(queryVariables[symbol]).inspect());
 	}
 }
 
@@ -218,7 +218,7 @@ function UnifyTwoVariables(DEBUG) {
 	console.log("BINDINGS: ");
 	var queryVariables = ENV.getQueryVariableBindings();
 	for(var symbol in queryVariables) {
-		console.log(symbol + ": " + Utils.rebuildTermFromHeap(queryVariables[symbol]));
+		console.log(symbol + ": " + Utils.rebuildTermFromHeap(queryVariables[symbol]).inspect());
 	}
 } 
 
@@ -312,7 +312,7 @@ function WamBookExample(DEBUG) {
 	console.log("BINDINGS: ");
 	var queryVariables = ENV.getQueryVariableBindings();
 	for(var symbol in queryVariables) {
-		console.log(symbol + ": " + Utils.rebuildTermFromHeap(queryVariables[symbol]));
+		console.log(symbol + ": " + Utils.rebuildTermFromHeap(queryVariables[symbol]).inspect());
 	}
 }
 
