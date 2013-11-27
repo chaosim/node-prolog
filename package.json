@@ -1,0 +1,27 @@
+{
+  "name": "node-prolog",
+  "version": "0.0.1",
+  "author": "Ken Koch <kkoch986@gmail.com>",
+  "description": "A prolog implementation in pure javascript.",
+  "contributors": [ ],
+  "bin": {},
+  "scripts": {
+    "main":"node main.js",
+    "test":"jasmine-node spec"
+  },
+  "main": "./lib/http-server",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/kkoch986/node-prolog"
+  },
+  "keywords": [
+    "prolog",
+    "logic programming"
+  ],
+  "dependencies" : {
+    "mocha":"*",
+    "sync-prompt":"*",
+    "should":"*"
+  },  
+  "license": "MIT"
+}
