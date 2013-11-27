@@ -52,7 +52,7 @@ function printUsage() {
  * Try unifying terms that dont unify.
  * Query: 			p(A,f(b)).
  * Program: 		p(b, f(c)).
- * Expected Result: failure
+ * Expected Result: failure on b/0 and c/0
  **/
 function Failure1(DEBUG) {
 	/**
