@@ -59,6 +59,7 @@ function Failure1(DEBUG) {
 	 * Create the X store and HEAP.
 	 **/
 	var ENV = new Structures.Env();
+	ENV.setDebug(DEBUG);
 
 	/**
 	 * Parse and Flatten the Query: 
@@ -76,9 +77,6 @@ function Failure1(DEBUG) {
 	 * Compile the argument registers into query instructions
 	 **/
 	var queryInstructions = Compiler.CompileLoadedQuery(ENV, flattened);
-	console.log(ENV.X());
-	console.log("Query Instructions:");
-	console.log(queryInstructions);
 
 	/**
 	 * Compile and Flatten the Program:
@@ -96,25 +94,18 @@ function Failure1(DEBUG) {
 	 * Compile the argument registers into program instructions
 	 **/
 	var programInstructions = Compiler.CompileLoadedProgram(ENV.X(), flattened);
-	console.log(ENV.X());
-	console.log("Program Instructions:");
-	console.log(programInstructions);
 
 	/**
 	 * Begin the evaluation by evaluating the QUERY.
 	 **/
-	console.log("Evaluate Query");
-	Instructions.evaluateInstructions(queryInstructions, ENV, DEBUG);
-	console.log(ENV.X());
-	console.log(ENV.HEAP());
-
-	console.log("Evaluate Program");
 	try {
-		Instructions.evaluateInstructions(programInstructions, ENV, DEBUG);
+		Instructions.evaluateInstructions(queryInstructions, ENV);
+		Instructions.evaluateInstructions(programInstructions, ENV);
 	} catch(e) { console.log("[ERROR] " + e); process.exit(); }
+	
+	console.log("END STATE");
 	console.log(ENV.X());
 	console.log(ENV.HEAP());
-
 
 	/**
 	 * Try to rebuild the term.
@@ -148,6 +139,7 @@ function UnifyTwoVariables(DEBUG) {
 	 * Create the X store and HEAP.
 	 **/
 	var ENV = new Structures.Env();
+	ENV.setDebug(DEBUG);
 
 	/**
 	 * Parse and Flatten the Query: 
@@ -189,13 +181,13 @@ function UnifyTwoVariables(DEBUG) {
 	 * Begin the evaluation by evaluating the QUERY.
 	 **/
 	console.log("Evaluate Query");
-	Instructions.evaluateInstructions(queryInstructions, ENV, DEBUG);
+	Instructions.evaluateInstructions(queryInstructions, ENV);
 	console.log(ENV.X());
 	console.log(ENV.HEAP());
 
 	console.log("Evaluate Program");
 	try {
-		Instructions.evaluateInstructions(programInstructions, ENV, DEBUG);
+		Instructions.evaluateInstructions(programInstructions, ENV);
 	} catch(e) { console.log("[ERROR] " + e); }
 	console.log(ENV.X());
 	console.log(ENV.HEAP());
@@ -218,7 +210,7 @@ function UnifyTwoVariables(DEBUG) {
 	console.log("BINDINGS: ");
 	var queryVariables = ENV.getQueryVariableBindings();
 	for(var symbol in queryVariables) {
-		console.log(symbol + ": " + Utils.rebuildTermFromHeap(queryVariables[symbol]).inspect());
+		console.log("\t" + symbol + ": " + Utils.rebuildTermFromHeap(queryVariables[symbol]).inspect());
 	}
 } 
 
@@ -234,6 +226,7 @@ function WamBookExample(DEBUG) {
 	 * Create the X store and HEAP.
 	 **/
 	var ENV = new Structures.Env();
+	ENV.setDebug(DEBUG);
 
 	/**
 	 * Parse and Flatten the Query: 
@@ -283,13 +276,13 @@ function WamBookExample(DEBUG) {
 	 * Begin the evaluation by evaluating the QUERY.
 	 **/
 	console.log("Evaluate Query");
-	Instructions.evaluateInstructions(queryInstructions, ENV, DEBUG);
+	Instructions.evaluateInstructions(queryInstructions, ENV);
 	console.log(ENV.X());
 	console.log(ENV.HEAP());
 
 	console.log("Evaluate Program");
 	try {
-		Instructions.evaluateInstructions(programInstructions, ENV, DEBUG);
+		Instructions.evaluateInstructions(programInstructions, ENV);
 	} catch(e) { console.log("[ERROR] " + e); }
 	console.log(ENV.X());
 	console.log(ENV.HEAP());
