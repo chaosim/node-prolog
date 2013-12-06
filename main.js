@@ -196,7 +196,7 @@ function WamBookExample(DEBUG) {
 			ENV.X().set(2, new CompleteStructure("h",2,[new StoreRef(ENV.X(),1), new StoreRef(ENV.X(),4)]));	// A2 = h(A1, X4)
 			ENV.X().set(3, new CompleteStructure("f",1,[new StoreRef(ENV.X(),4)]));								// A3 = f(X4)
 			ENV.X().set(4, new Variable("W", new StoreRef(ENV.X(),4)));											// X4 = W
-			return [1];
+			return new CompleteStructure("p", 3, [new StoreRef(ENV.X(), 1), new StoreRef(ENV.X(), 2), new StoreRef(ENV.X(), 3)]);
 		},
 		// Prepare the program.
 		function(ENV){
