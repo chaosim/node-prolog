@@ -69,11 +69,10 @@ function Failure1(DEBUG) {
 			 *
 			 * Currently no code for this step :-(
 			 **/
-			ENV.X().set(1, new CompleteStructure("p",2,[new StoreRef(ENV.X(),2), new StoreRef(ENV.X(), 3)]));
-			ENV.X().set(2, new Variable("A", new StoreRef(ENV.X(),2)));
-			ENV.X().set(3, new CompleteStructure("f",1,[new StoreRef(ENV.X(), 4)]));
-			ENV.X().set(4, new CompleteStructure("b",0,[]));
-			return [ 4, 3, 1 ]; // return the flattened register order.
+			ENV.X().set(1, new Variable("A", new StoreRef(ENV.X(),2))); 									// A1 = A
+			ENV.X().set(2, new CompleteStructure("f",1,[new StoreRef(ENV.X(), 3)]));  						// A2 = f(X3)
+			ENV.X().set(3, new CompleteStructure("b",0,[]));  												// X3 = b
+			return [1];
 		},
 		// Prepare the program.
 		function(ENV){
@@ -112,11 +111,10 @@ function VariableIndependance(DEBUG) {
 			 *
 			 * Currently no code for this step :-(
 			 **/
-			ENV.X().set(1, new CompleteStructure("p",3,[new StoreRef(ENV.X(),2), new StoreRef(ENV.X(), 3), new StoreRef(ENV.X(), 4)]));
-			ENV.X().set(2, new CompleteStructure("a",0,[]));
-			ENV.X().set(3, new CompleteStructure("b",0,[]));
-			ENV.X().set(4, new Variable("X"));
-			return [ 3, 2, 1 ]; // return the flattened register order.
+			ENV.X().set(1, new CompleteStructure("a",0,[])); 													// A1 = a
+			ENV.X().set(2, new CompleteStructure("b",0,[]));													// A2 = b
+			ENV.X().set(3, new Variable("X"));																	// A3 = X
+			return [1];
 		},
 		// Prepare the program.
 		function(ENV){
@@ -155,8 +153,7 @@ function UnifyTwoVariables(DEBUG) {
 			 *
 			 * Currently no code for this step :-(
 			 **/
-			ENV.X().set(1, new CompleteStructure("p",1,[new StoreRef(ENV.X(),2)]));
-			ENV.X().set(2, new Variable("A", new StoreRef(ENV.X(),2)));
+			ENV.X().set(1, new Variable("A", new StoreRef(ENV.X(),1))); 										// A1 = A
 			return [ 1 ];
 		},
 		// Prepare the program.
@@ -195,12 +192,11 @@ function WamBookExample(DEBUG) {
 			 *
 			 * Currently no code for this step :-(
 			 **/
-			ENV.X().set(1, new CompleteStructure("p",3,[new StoreRef(ENV.X(),2), new StoreRef(ENV.X(),3), new StoreRef(ENV.X(),4)]));
-			ENV.X().set(2, new Variable("Z", new StoreRef(ENV.X(),2)));
-			ENV.X().set(3, new CompleteStructure("h", 2, [new StoreRef(ENV.X(),2), new StoreRef(ENV.X(),5)]));
-			ENV.X().set(4, new CompleteStructure("f", 1, [new StoreRef(ENV.X(),5)]));
-			ENV.X().set(5, new Variable("W", new StoreRef(ENV.X(),5)));
-			return [ 3, 4, 1 ];
+			ENV.X().set(1, new Variable("Z", new StoreRef(ENV.X(),1)));											// A1 = Z
+			ENV.X().set(2, new CompleteStructure("h",2,[new StoreRef(ENV.X(),1), new StoreRef(ENV.X(),4)]));	// A2 = h(A1, X4)
+			ENV.X().set(3, new CompleteStructure("f",1,[new StoreRef(ENV.X(),4)]));								// A3 = f(X4)
+			ENV.X().set(4, new Variable("W", new StoreRef(ENV.X(),4)));											// X4 = W
+			return [1];
 		},
 		// Prepare the program.
 		function(ENV){
