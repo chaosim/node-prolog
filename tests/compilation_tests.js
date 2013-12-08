@@ -13,6 +13,8 @@ describe("L0 Compiler", function(){
 	/**
 	 * A Test Suite for The L0 WAM Query Compilation.
 	 **/
+	// TODO: Write more tests to involve the use of put_value (i.e. a query atom with the same variable twice in the arg registers)
+	// TODO: add more tests with nesting in the arguemnts (i.e. p(a(b(c,d))))
 	describe("Query Compilation", function(){
 		var ENV = null;
 
@@ -25,11 +27,20 @@ describe("L0 Compiler", function(){
 		 * 		?- p(A,f(b)).
 		 **/
 		it("should compile the Failure1 query", function(){
-			ENV.X().set(1, new Variable("A", new StoreRef(ENV.X(),2))); 									// A1 = A
+			ENV.X().set(1, new Variable("A", new StoreRef(ENV.X(),1))); 									// A1 = A
 			ENV.X().set(2, new CompleteStructure("f",1,[new StoreRef(ENV.X(), 3)]));  						// A2 = f(X3)
 			ENV.X().set(3, new CompleteStructure("b",0,[]));  												// X3 = b
 
-			var queryInstructions = Compiler.CompileLoadedQuery(ENV, [1]);
+			var queryInstructions = Compiler.CompileLoadedQuery(
+				ENV, 
+				new CompleteStructure(
+					"p", 2,
+					[
+						new StoreRef(ENV.X(), 1),
+						new StoreRef(ENV.X(), 2)
+					]
+				)
+			);
 
 			var expectedInstructions = [
 				new Instructions.put_variable(new StoreRef(ENV.X(), 3), new StoreRef(ENV.X(), 1)),			// put_variable X3 A1
@@ -50,7 +61,17 @@ describe("L0 Compiler", function(){
 			ENV.X().set(2, new CompleteStructure("b",0,[]));													// A2 = b
 			ENV.X().set(3, new Variable("X"));																	// A3 = X
 
-			var queryInstructions = Compiler.CompileLoadedQuery(ENV, [1]);
+			var queryInstructions = Compiler.CompileLoadedQuery(
+				ENV,
+				new CompleteStructure(
+					"p", 3,
+					[
+						new StoreRef(ENV.X(), 1),
+						new StoreRef(ENV.X(), 2),
+						new StoreRef(ENV.X(), 3)
+					]
+				)
+			);
 
 			var expectedInstructions = [
 				new Instructions.put_structure("a", 0, new StoreRef(ENV.X(), 1)), 								// put_structure a/0 A1
@@ -69,7 +90,15 @@ describe("L0 Compiler", function(){
 		it("should compile the UnifyTwoVariables query", function(){
 			ENV.X().set(1, new Variable("A", new StoreRef(ENV.X(),1))); 										// A1 = A
 
-			var queryInstructions = Compiler.CompileLoadedQuery(ENV, [1]);
+			var queryInstructions = Compiler.CompileLoadedQuery(
+				ENV, 
+				new CompleteStructure(
+					"p", 1,
+					[
+						new StoreRef(ENV.X(), 1)
+					]
+				)
+			);
 
 			var expectedInstructions = [
 				new Instructions.put_variable(new StoreRef(ENV.X(), 2), new StoreRef(ENV.X(), 1)), 				// put_variable X2 A1
@@ -89,7 +118,17 @@ describe("L0 Compiler", function(){
 			ENV.X().set(3, new CompleteStructure("f",1,[new StoreRef(ENV.X(),4)]));								// A3 = f(X4)
 			ENV.X().set(4, new Variable("W", new StoreRef(ENV.X(),4)));											// X4 = W
 			
-			var queryInstructions = Compiler.CompileLoadedQuery(ENV, [1]);
+			var queryInstructions = Compiler.CompileLoadedQuery(
+				ENV, 
+				new CompleteStructure(
+					"p", 3, 
+					[
+						new StoreRef(ENV.X(), 1),
+						new StoreRef(ENV.X(), 2),
+						new StoreRef(ENV.X(), 3)
+					]
+				)
+			);
 
 			var expectedInstructions = [
 				new Instructions.put_variable(new StoreRef(ENV.X(), 4), new StoreRef(ENV.X(), 1)), 				// put_variable X4 A1
@@ -248,6 +287,19 @@ function compareInstructionLists(list_a, list_b) {
 			case Instructions.unify_value:
 				actualInstruction.reference.store.should.equal(expectedInstruction.reference.store);
 				actualInstruction.reference.index.should.equal(expectedInstruction.reference.index);
+				break ;
+			case Instructions.put_variable:
+			case Instructions.put_value:
+				actualInstruction.xn.store.should.equal(expectedInstruction.xn.store);
+				actualInstruction.xn.index.should.equal(expectedInstruction.xn.index);
+				actualInstruction.ai.store.should.equal(expectedInstruction.ai.store);
+				actualInstruction.ai.index.should.equal(expectedInstruction.ai.index);
+				break ;
+			case Instructions.control_call:
+				actualInstruction.predicate.should.equal(expectedInstruction.predicate);
+				actualInstruction.arity.should.equal(expectedInstruction.arity);
+				break ;
+			case Instructions.proceed:
 				break ;
 			default:
 				// fail.

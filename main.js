@@ -72,7 +72,7 @@ function Failure1(DEBUG) {
 			ENV.X().set(1, new Variable("A", new StoreRef(ENV.X(),2))); 									// A1 = A
 			ENV.X().set(2, new CompleteStructure("f",1,[new StoreRef(ENV.X(), 3)]));  						// A2 = f(X3)
 			ENV.X().set(3, new CompleteStructure("b",0,[]));  												// X3 = b
-			return [1];
+			return new CompleteStructure("p", 2,[ new StoreRef(ENV.X(), 1), new StoreRef(ENV.X(), 2) ]);
 		},
 		// Prepare the program.
 		function(ENV){
@@ -114,7 +114,7 @@ function VariableIndependance(DEBUG) {
 			ENV.X().set(1, new CompleteStructure("a",0,[])); 													// A1 = a
 			ENV.X().set(2, new CompleteStructure("b",0,[]));													// A2 = b
 			ENV.X().set(3, new Variable("X"));																	// A3 = X
-			return [1];
+			return new CompleteStructure("p", 3,[new StoreRef(ENV.X(), 1),new StoreRef(ENV.X(), 2),new StoreRef(ENV.X(), 3)]);
 		},
 		// Prepare the program.
 		function(ENV){
@@ -154,7 +154,7 @@ function UnifyTwoVariables(DEBUG) {
 			 * Currently no code for this step :-(
 			 **/
 			ENV.X().set(1, new Variable("A", new StoreRef(ENV.X(),1))); 										// A1 = A
-			return [ 1 ];
+			return new CompleteStructure("p", 1,[new StoreRef(ENV.X(), 1)]);
 		},
 		// Prepare the program.
 		function(ENV){
