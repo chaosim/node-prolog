@@ -42,6 +42,8 @@ describe("L0 Compiler", function(){
 				)
 			);
 
+			queryInstructions = ENV.CODE().splice(queryInstructions[0], queryInstructions[1]);
+
 			var expectedInstructions = [
 				new Instructions.put_variable(new StoreRef(ENV.X(), 3), new StoreRef(ENV.X(), 1)),			// put_variable X3 A1
 				new Instructions.put_structure("f", 1, new StoreRef(ENV.X(), 2)),							// put_structure f/1 A2
@@ -73,6 +75,8 @@ describe("L0 Compiler", function(){
 				)
 			);
 
+			queryInstructions = ENV.CODE().splice(queryInstructions[0], queryInstructions[1]);
+
 			var expectedInstructions = [
 				new Instructions.put_structure("a", 0, new StoreRef(ENV.X(), 1)), 								// put_structure a/0 A1
 				new Instructions.put_structure("b", 0, new StoreRef(ENV.X(), 2)), 								// put_structure b/0 A2
@@ -99,6 +103,8 @@ describe("L0 Compiler", function(){
 					]
 				)
 			);
+
+			queryInstructions = ENV.CODE().splice(queryInstructions[0], queryInstructions[1]);
 
 			var expectedInstructions = [
 				new Instructions.put_variable(new StoreRef(ENV.X(), 2), new StoreRef(ENV.X(), 1)), 				// put_variable X2 A1
@@ -129,6 +135,8 @@ describe("L0 Compiler", function(){
 					]
 				)
 			);
+
+			queryInstructions = ENV.CODE().splice(queryInstructions[0], queryInstructions[1]);
 
 			var expectedInstructions = [
 				new Instructions.put_variable(new StoreRef(ENV.X(), 4), new StoreRef(ENV.X(), 1)), 				// put_variable X4 A1
