@@ -1,3 +1,5 @@
+#!/usr/bin/env node
+
 /**
  * Load the Structures.
  **/
@@ -82,11 +84,13 @@ function Failure1(DEBUG) {
 			 *
 			 * Currently no code for this step :-( 
 			 **/
-			ENV.X().set(1, new CompleteStructure("p",2,[new StoreRef(ENV.X(),2), new StoreRef(ENV.X(), 3)]));
-			ENV.X().set(2, new CompleteStructure("b",0,[]));
-			ENV.X().set(3, new CompleteStructure("f",1,[new StoreRef(ENV.X(), 4)]));
-			ENV.X().set(4, new CompleteStructure("c",0,[]));
-			return [ 1,2,3,4 ];
+			ENV.X().set(1, new CompleteStructure("b",0,[]));													// A1 = b/0
+			ENV.X().set(2, new CompleteStructure("f",1,[ new StoreRef(ENV.X(), 3) ]));							// A2 = f(X3)
+			ENV.X().set(3, new CompleteStructure("c",0,[]));													// X3 = c/0
+
+			return [
+				new CompleteStructure("p", 2, [ new StoreRef(ENV.X(), 1), new StoreRef(ENV.X(), 2)])
+			];
 		}
 	);
 }
@@ -124,11 +128,14 @@ function VariableIndependance(DEBUG) {
 			 *
 			 * Currently no code for this step :-( 
 			 **/
-			ENV.X().set(1, new CompleteStructure("p",3, [new StoreRef(ENV.X(),2), new StoreRef(ENV.X(),3), new StoreRef(ENV.X(),4)]));
-			ENV.X().set(2, new Variable("X"));
-			ENV.X().set(3, new CompleteStructure("b",0,[]));
-			ENV.X().set(4, new CompleteStructure("c",0,[]));
-			return [ 1,3,4 ];
+			ENV.X().set(1, new Variable("X", new StoreRef(ENV.X(), 4))); 										// A1 = X [X4]
+			ENV.X().set(2, new CompleteStructure("b",0, []));													// A2 = b/0 
+			ENV.X().set(3, new CompleteStructure("c",0, []));													// A3 = c/0
+			ENV.X().set(4, new Variable("X", new StoreRef(ENV.X(), 4))); 										// X4 = X
+
+			return [
+				new CompleteStructure("p", 3, [new StoreRef(ENV.X(), 1), new StoreRef(ENV.X(), 2), new StoreRef(ENV.X(), 3)])
+			];
 		}
 	);
 }
@@ -164,9 +171,10 @@ function UnifyTwoVariables(DEBUG) {
 			 *
 			 * Currently no code for this step :-( 
 			 **/
-			ENV.X().set(1, new CompleteStructure("p",1,[new StoreRef(ENV.X(),2)]));
-			ENV.X().set(2, new Variable("Z", new StoreRef(ENV.X(),2)));
-			return [1];
+			ENV.X().set(1, new Variable("Z", new StoreRef(ENV.X(),1)));											// A1 = Z
+			return [ 
+				new CompleteStructure("p", 1,[new StoreRef(ENV.X(), 1)])
+			];
 		}
 	);
 } 
@@ -206,33 +214,19 @@ function WamBookExample(DEBUG) {
 			 *
 			 * Currently no code for this step :-( 
 			 **/
-			ENV.X().set(1, new CompleteStructure("p",3,[new StoreRef(ENV.X(),2), new StoreRef(ENV.X(),3), new StoreRef(ENV.X(),4)]));
-			ENV.X().set(2, new CompleteStructure("f",1,[new StoreRef(ENV.X(),5)]));
-			ENV.X().set(3, new CompleteStructure("h",2,[new StoreRef(ENV.X(),4), new StoreRef(ENV.X(),6)]));
-			ENV.X().set(4, new Variable("Y", new StoreRef(ENV.X(),4)));
-			ENV.X().set(5, new Variable("X", new StoreRef(ENV.X(),5)));
-			ENV.X().set(6, new CompleteStructure("f",1,[new StoreRef(ENV.X(),7)]));
-			ENV.X().set(7, new CompleteStructure("a",0,[]));
-			return [1,2,3,6,7];
+			ENV.X().set(1, new CompleteStructure("f",1,[new StoreRef(ENV.X(),4)]));								// A1 = f(X4)
+			ENV.X().set(2, new CompleteStructure("h",2,[new StoreRef(ENV.X(),5), new StoreRef(ENV.X(),6)]));	// A2 = h(X5, X6)
+			ENV.X().set(3, new Variable("Y", new StoreRef(ENV.X(),5)));											// A3 = Y [X5]
+			ENV.X().set(4, new Variable("X", new StoreRef(ENV.X(),4)));											// X4 = X
+			ENV.X().set(5, new Variable("Y", new StoreRef(ENV.X(),5)));											// X5 = Y
+			ENV.X().set(6, new CompleteStructure("f",1,[new StoreRef(ENV.X(), 7)]));							// X6 = F(X7)
+			ENV.X().set(7, new CompleteStructure("a",0,[]));													// X7 = a/0
+			return [
+				new CompleteStructure("p", 3, [new StoreRef(ENV.X(), 1), new StoreRef(ENV.X(), 2), new StoreRef(ENV.X(), 3)])
+			];
 		}
 	);
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
