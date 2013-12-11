@@ -16,6 +16,7 @@ describe("L1 Compiler", function(){
 	// TODO: Write more tests to involve the use of put_value (i.e. a query atom with the same variable twice in the arg registers)
 	// TODO: add more tests with nesting in the arguemnts (i.e. p(a(b(c,d))))
 	// TODO: Add some test for error tolerance (i.e. dont pass a query atom)
+	// TODO: Add tests to check that variable bindings are correct in the ENV.
 	describe("Query Compiler", function(){
 		var ENV = null;
 
