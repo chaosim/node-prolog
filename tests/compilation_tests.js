@@ -9,13 +9,14 @@ var Compiler 			= require("../lib/compilers");
 /**
  * A Test Suite for The L0 WAM Compilation.
  **/
-describe("L0 Compiler", function(){
+describe("L1 Compiler", function(){
 	/**
 	 * A Test Suite for The L0 WAM Query Compilation.
 	 **/
 	// TODO: Write more tests to involve the use of put_value (i.e. a query atom with the same variable twice in the arg registers)
 	// TODO: add more tests with nesting in the arguemnts (i.e. p(a(b(c,d))))
-	describe("Query Compilation", function(){
+	// TODO: Add some test for error tolerance (i.e. dont pass a query atom)
+	describe("Query Compiler", function(){
 		var ENV = null;
 
 		beforeEach(function(){
@@ -156,7 +157,8 @@ describe("L0 Compiler", function(){
 	/**
 	 * A Test Suite for The L0 WAM Program Compilation.
 	 **/
-	describe("Program Compilation", function(){
+	// TODO: Add tests for compiling multiple facts
+	describe("Program Compiler", function(){
 		var ENV = null;
 
 		beforeEach(function(){
@@ -168,21 +170,37 @@ describe("L0 Compiler", function(){
 		 * 		p(b,f(c)).
 		 **/
 		it("should compile the Failure1 program", function(){
-			ENV.X().set(1, new CompleteStructure("p",2,[new StoreRef(ENV.X(),2), new StoreRef(ENV.X(), 3)]));
-			ENV.X().set(2, new CompleteStructure("b",0,[]));
-			ENV.X().set(3, new CompleteStructure("f",1,[new StoreRef(ENV.X(), 4)]));
-			ENV.X().set(4, new CompleteStructure("c",0,[]));
-			var flattened = [ 1,2,3,4 ];
-			var programInstructions = Compiler.CompileLoadedProgram(ENV.X(), flattened);
+
+			ENV.X().set(1, new CompleteStructure("b",0,[]));													// A1 = b/0
+			ENV.X().set(2, new CompleteStructure("f",1,[ new StoreRef(ENV.X(), 3) ]));							// A2 = f(X3)
+			ENV.X().set(3, new CompleteStructure("c",0,[]));													// X3 = c/0
+
+			var programInstructionBounds = Compiler.CompileLoadedFact(
+				ENV, 
+				new CompleteStructure(
+					"p", 2, 
+					[
+						new StoreRef(ENV.X(), 1),
+						new StoreRef(ENV.X(), 2)
+					]
+				)
+			);
+
+			// Make sure something is returned
+			programInstructionBounds.constructor.should.equal(Array);
+
+			// Check that the label is correct
+			ENV.CODE().indexOfLabel("p/2").should.equal(programInstructionBounds[0]);
+
+			// check the actual instructions
+			var programInstructions = ENV.CODE().splice(programInstructionBounds);
 
 			var expectedInstructions = [
-				new Instructions.get_structure("p", 2, new StoreRef(ENV.X(), 1)), 	// get_structure p/2 X[1]
-				new Instructions.unify_variable(new StoreRef(ENV.X(), 2)), 			// unify_variable X[2]
-				new Instructions.unify_variable(new StoreRef(ENV.X(), 3)), 			// unify_variable X[3]
-				new Instructions.get_structure("b", 0, new StoreRef(ENV.X(), 2)), 	// get_structure b/0 X[2]
-				new Instructions.get_structure("f", 1, new StoreRef(ENV.X(), 3)), 	// get_structure f/1 X[3]
-				new Instructions.unify_variable(new StoreRef(ENV.X(), 4)), 			// unify_variable X[4]
-				new Instructions.get_structure("c", 0, new StoreRef(ENV.X(), 4)) 	// get_structure c/0 X[4]
+				new Instructions.get_structure("b", 0, new StoreRef(ENV.X(), 1)), 								// get_structure b/0 A1
+				new Instructions.get_structure("f", 1, new StoreRef(ENV.X(), 2)), 								// get_structure f/1 A2
+				new Instructions.unify_variable(new StoreRef(ENV.X(), 3)), 										// unify_variable X3
+				new Instructions.get_structure("c", 0, new StoreRef(ENV.X(), 3)), 								// get_structure c/0 X3
+				new Instructions.proceed()	 																	// proceed
 			];
 
 			compareInstructionLists(expectedInstructions, programInstructions);
@@ -193,20 +211,38 @@ describe("L0 Compiler", function(){
 		 * 		p(X, b, c).
 		 **/
 		it("should compile the VariableIndependance program", function(){
-			ENV.X().set(1, new CompleteStructure("p",3, [new StoreRef(ENV.X(),2), new StoreRef(ENV.X(),3), new StoreRef(ENV.X(),4)]));
-			ENV.X().set(2, new Variable("X"));
-			ENV.X().set(3, new CompleteStructure("b",0,[]));
-			ENV.X().set(4, new CompleteStructure("c",0,[]));
-			var flattened = [ 1,3,4 ];
-			var programInstructions = Compiler.CompileLoadedProgram(ENV.X(), flattened);
+
+			ENV.X().set(1, new Variable("X", new StoreRef(ENV.X(), 4))); 										// A1 = X [X4]
+			ENV.X().set(2, new CompleteStructure("b",0, []));													// A2 = b/0 
+			ENV.X().set(3, new CompleteStructure("c",0, []));													// A3 = c/0
+			ENV.X().set(4, new Variable("X", new StoreRef(ENV.X(), 4))); 										// X4 = X
+
+			var programInstructionBounds = Compiler.CompileLoadedFact(
+				ENV, 
+				new CompleteStructure(
+					"p", 3, 
+					[
+						new StoreRef(ENV.X(), 1),
+						new StoreRef(ENV.X(), 2),
+						new StoreRef(ENV.X(), 3)
+					]
+				)
+			);
+
+			// Make sure something is returned
+			programInstructionBounds.constructor.should.equal(Array);
+
+			// Check that the label is correct
+			ENV.CODE().indexOfLabel("p/3").should.equal(programInstructionBounds[0]);
+
+			// check the actual instructions
+			var programInstructions = ENV.CODE().splice(programInstructionBounds);
 
 			var expectedInstructions = [
-				new Instructions.get_structure("p", 3, new StoreRef(ENV.X(), 1)), 	// get_structure p/3 X[1]
-				new Instructions.unify_variable(new StoreRef(ENV.X(), 2)), 			// unify_variable X[2]
-				new Instructions.unify_variable(new StoreRef(ENV.X(), 3)), 			// unify_variable X[3]
-				new Instructions.unify_variable(new StoreRef(ENV.X(), 4)), 			// unify_variable X[4]
-				new Instructions.get_structure("b", 0, new StoreRef(ENV.X(), 3)), 	// get_structure b/0 X[3]
-				new Instructions.get_structure("c", 0, new StoreRef(ENV.X(), 4)) 	// get_structure c/0 X[4]
+				new Instructions.get_variable(new StoreRef(ENV.X(), 4), new StoreRef(ENV.X(), 1)), 				// get_variable X4 A1
+				new Instructions.get_structure("b", 0, new StoreRef(ENV.X(), 2)), 								// get_structure b/0 A2
+				new Instructions.get_structure("c", 0, new StoreRef(ENV.X(), 3)), 								// get_structure c/0 A3
+				new Instructions.proceed() 																		// proceed
 			];
 
 			compareInstructionLists(expectedInstructions, programInstructions);
@@ -217,14 +253,30 @@ describe("L0 Compiler", function(){
 		 * 		p(Z).
 		 **/
 		it("should compile the UnifyTwoVariables program", function(){
-			ENV.X().set(1, new CompleteStructure("p",1,[new StoreRef(ENV.X(),2)]));
-			ENV.X().set(2, new Variable("Z", new StoreRef(ENV.X(),2)));
-			var flattened = [1];
-			var programInstructions = Compiler.CompileLoadedProgram(ENV.X(), flattened);
+			ENV.X().set(1, new Variable("Z", new StoreRef(ENV.X(),1)));											// A1 = Z
+
+			var programInstructionBounds = Compiler.CompileLoadedFact(
+				ENV, 
+				new CompleteStructure(
+					"p", 1,
+					[
+						new StoreRef(ENV.X(), 1)
+					]
+				)
+			);
+
+			// Make sure something is returned
+			programInstructionBounds.constructor.should.equal(Array);
+
+			// Check that the label is correct
+			ENV.CODE().indexOfLabel("p/1").should.equal(programInstructionBounds[0]);
+
+			// check the actual instructions
+			var programInstructions = ENV.CODE().splice(programInstructionBounds);
 
 			var expectedInstructions = [
-				new Instructions.get_structure("p", 1, new StoreRef(ENV.X(), 1)), 	// get_structure p/1 X[1]
-				new Instructions.unify_variable(new StoreRef(ENV.X(), 2)) 			// unify_variable X[2]
+				new Instructions.get_variable(new StoreRef(ENV.X(), 1), new StoreRef(ENV.X(), 1)), 				// get_variable A1 X1
+				new Instructions.proceed() 																		// proceed
 			];
 
 			compareInstructionLists(expectedInstructions, programInstructions);
@@ -233,34 +285,48 @@ describe("L0 Compiler", function(){
 		/**
 		 * The example program from the wambook is: 
 		 *		p(f(X), h(Y, f(a)), Y).
-		 *
-		 * This test hard codes the parsed, flattened version and pipes it into compile.
-		 * It then checks the resulting instructions against the known L0 WAM Instructions.
 		 **/
 		it("should compile the WAMBook example program", function(){
-			ENV.X().set(1, new CompleteStructure("p",3,[new StoreRef(ENV.X(),2), new StoreRef(ENV.X(),3), new StoreRef(ENV.X(),4)]));
-			ENV.X().set(2, new CompleteStructure("f",1,[new StoreRef(ENV.X(),5)]));
-			ENV.X().set(3, new CompleteStructure("h",2,[new StoreRef(ENV.X(),4), new StoreRef(ENV.X(),6)]));
-			ENV.X().set(4, new Variable("Y", new StoreRef(ENV.X(),4)));
-			ENV.X().set(5, new Variable("X", new StoreRef(ENV.X(),5)));
-			ENV.X().set(6, new CompleteStructure("f",1,[new StoreRef(ENV.X(),7)]));
-			ENV.X().set(7, new CompleteStructure("a",0,[]));
-			flattened = [1,2,3,6,7];
-			var programInstructions = Compiler.CompileLoadedProgram(ENV.X(), flattened);
+			ENV.X().set(1, new CompleteStructure("f",1,[new StoreRef(ENV.X(),4)]));								// A1 = f(X4)
+			ENV.X().set(2, new CompleteStructure("h",2,[new StoreRef(ENV.X(),5), new StoreRef(ENV.X(),6)]));	// A2 = h(X5, X6)
+			ENV.X().set(3, new Variable("Y", new StoreRef(ENV.X(),5)));											// A3 = Y [X5]
+			ENV.X().set(4, new Variable("X", new StoreRef(ENV.X(),4)));											// X4 = X
+			ENV.X().set(5, new Variable("Y", new StoreRef(ENV.X(),5)));											// X5 = Y
+			ENV.X().set(6, new CompleteStructure("f",1,[new StoreRef(ENV.X(), 7)]));							// X6 = F(X7)
+			ENV.X().set(7, new CompleteStructure("a",0,[]));													// X7 = a/0
+
+			var programInstructionBounds = Compiler.CompileLoadedFact(
+				ENV, 
+				new CompleteStructure(
+					"p", 3, 
+					[
+						new StoreRef(ENV.X(), 1),
+						new StoreRef(ENV.X(), 2),
+						new StoreRef(ENV.X(), 3)
+					]
+				)
+			);
+
+			// Make sure something is returned
+			programInstructionBounds.constructor.should.equal(Array);
+
+			// Check that the label is correct
+			ENV.CODE().indexOfLabel("p/3").should.equal(programInstructionBounds[0]);
+
+			// check the actual instructions
+			var programInstructions = ENV.CODE().splice(programInstructionBounds);
 
 			var expectedInstructions = [
-				new Instructions.get_structure("p", 3, new StoreRef(ENV.X(), 1)), 	// get_structure p/3 X[1]
-				new Instructions.unify_variable(new StoreRef(ENV.X(), 2)), 			// unify_variable X[2]
-				new Instructions.unify_variable(new StoreRef(ENV.X(), 3)), 			// unify_variable X[3]
-				new Instructions.unify_variable(new StoreRef(ENV.X(), 4)), 			// unify_variable X[4]
-				new Instructions.get_structure("f", 1, new StoreRef(ENV.X(), 2)), 	// get_structure f/1 X[2]
-				new Instructions.unify_variable(new StoreRef(ENV.X(), 5)), 			// unify_variable X[5]
-				new Instructions.get_structure("h", 2, new StoreRef(ENV.X(), 3)), 	// get_structure h/2 X[3]
-				new Instructions.unify_value(new StoreRef(ENV.X(), 4)), 			// unify_value X[4]
-				new Instructions.unify_variable(new StoreRef(ENV.X(), 6)), 			// unify_variable X[6]
-				new Instructions.get_structure("f", 1, new StoreRef(ENV.X(), 6)), 	// get_structure f/1 X[6]
-				new Instructions.unify_variable(new StoreRef(ENV.X(), 7)), 			// unify_variable X[7]
-				new Instructions.get_structure("a", 0, new StoreRef(ENV.X(), 7)) 	// get_structure f/1 X[7]
+				new Instructions.get_structure("f", 1, new StoreRef(ENV.X(), 1)), 								// get_structure f/1 A1
+				new Instructions.unify_variable(new StoreRef(ENV.X(), 4)), 										// unify_variable X4
+				new Instructions.get_structure("h", 2, new StoreRef(ENV.X(), 2)), 								// get_structure h/2 A2
+				new Instructions.unify_variable(new StoreRef(ENV.X(), 5)), 										// unify_variable X5
+				new Instructions.unify_variable(new StoreRef(ENV.X(), 6)), 										// unify_variable X6
+				new Instructions.get_value(new StoreRef(ENV.X(), 5), new StoreRef(ENV.X(), 3)), 				// get_value X5 A3
+				new Instructions.get_structure("f", 1, new StoreRef(ENV.X(), 6)), 								// get_structure f/1 X6
+				new Instructions.unify_variable(new StoreRef(ENV.X(), 7)), 										// unify_variable X7
+				new Instructions.get_structure("a", 0, new StoreRef(ENV.X(), 7)), 								// get_structure a/0 X7
+				new Instructions.proceed()		 																// proceed
 			];
 
 			compareInstructionLists(expectedInstructions, programInstructions);
@@ -298,6 +364,8 @@ function compareInstructionLists(list_a, list_b) {
 				break ;
 			case Instructions.put_variable:
 			case Instructions.put_value:
+			case Instructions.get_variable:
+			case Instructions.get_value:
 				actualInstruction.xn.store.should.equal(expectedInstruction.xn.store);
 				actualInstruction.xn.index.should.equal(expectedInstruction.xn.index);
 				actualInstruction.ai.store.should.equal(expectedInstruction.ai.store);
