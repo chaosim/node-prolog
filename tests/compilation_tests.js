@@ -13,15 +13,87 @@ describe("L1 Compiler", function(){
 	/**
 	 * A Test Suite for The L0 WAM Query Compilation.
 	 **/
-	// TODO: Write more tests to involve the use of put_value (i.e. a query atom with the same variable twice in the arg registers)
-	// TODO: add more tests with nesting in the arguemnts (i.e. p(a(b(c,d))))
 	// TODO: Add some test for error tolerance (i.e. dont pass a query atom)
 	// TODO: Add tests to check that variable bindings are correct in the ENV.
+	// TODO: Add tests to test compilation of programs involving multiple facts
 	describe("Query Compiler", function(){
 		var ENV = null;
 
 		beforeEach(function(){
 			ENV = new Structures.Env();	
+		});
+
+		/**
+		 * Test highly nested structures.
+		 * The query is:
+		 *		?- p(a(b(c(d(e)))), B).
+		 **/
+		it("should handle deeply nested structures", function(){
+			ENV.X().set(1, new CompleteStructure("a", 1, [ new StoreRef(ENV.X(), 3) ])); 					// A1 = a(X3)
+			ENV.X().set(2, new Variable("B", new StoreRef(ENV.X(), 2))); 									// A2 = B
+			ENV.X().set(3, new CompleteStructure("b", 1, [ new StoreRef(ENV.X(), 4) ])); 					// X3 = b(X4)
+			ENV.X().set(4, new CompleteStructure("c", 1, [ new StoreRef(ENV.X(), 5) ])); 					// X4 = c(X5)
+			ENV.X().set(5, new CompleteStructure("d", 1, [ new StoreRef(ENV.X(), 6) ])); 					// X5 = d(X6)
+			ENV.X().set(6, new CompleteStructure("e", 0, [])); 												// X6 = e/0
+
+			var queryInstructions = Compiler.CompileLoadedQuery(
+				ENV, 
+				new CompleteStructure(
+					"p", 2,
+					[
+						new StoreRef(ENV.X(), 1),
+						new StoreRef(ENV.X(), 2)
+					]
+				)
+			);
+
+			queryInstructions = ENV.CODE().splice(queryInstructions[0], queryInstructions[1]);
+
+			var expectedInstructions = [
+				new Instructions.put_structure("a", 1, new StoreRef(ENV.X(), 1)), 							// put_structure a/1 A1
+				new Instructions.put_structure("b", 1, new StoreRef(ENV.X(), 3)), 							// put_structure b/1 X3
+				new Instructions.put_structure("c", 1, new StoreRef(ENV.X(), 4)), 							// put_structure c/1 X4
+				new Instructions.put_structure("d", 1, new StoreRef(ENV.X(), 5)), 							// put_structure d/1 X5
+				new Instructions.put_structure("e", 0, new StoreRef(ENV.X(), 6)), 							// put_structure e/0 X6
+				new Instructions.put_variable(new StoreRef(ENV.X(), 3), new StoreRef(ENV.X(), 2)), 			// put_variable X3 A2
+				new Instructions.control_call("p", 2)														// call p/1
+			];
+
+			compareInstructionLists(expectedInstructions, queryInstructions);
+		});
+
+		/**
+		 * Test the use of put_value, that is, a query with the same var twice in the arguments.
+		 * The query is:
+		 *		?- p(A, b, A).
+		 **/
+		it("should correctly use the put_value instruction", function(){
+			ENV.X().set(1, new Variable("A", new StoreRef(ENV.X(), 1))); 									// A1 = A
+			ENV.X().set(2, new CompleteStructure("b", 0, [])); 												// A2 = b/0
+			ENV.X().set(3, new Variable("A", new StoreRef(ENV.X(), 1))); 									// A3 = A [A1]
+
+			var queryInstructions = Compiler.CompileLoadedQuery(
+				ENV, 
+				new CompleteStructure(
+					"p", 3,
+					[
+						new StoreRef(ENV.X(), 1),
+						new StoreRef(ENV.X(), 2),
+						new StoreRef(ENV.X(), 3)
+					]
+				)
+			);
+
+			queryInstructions = ENV.CODE().splice(queryInstructions[0], queryInstructions[1]);
+
+			var expectedInstructions = [
+				new Instructions.put_variable(new StoreRef(ENV.X(), 4), new StoreRef(ENV.X(), 1)),			// put_variable X4 A1
+				new Instructions.put_structure("b", 0, new StoreRef(ENV.X(), 2)),							// put_structure b/0 A2
+				new Instructions.put_value(new StoreRef(ENV.X(), 4), new StoreRef(ENV.X(), 3)), 			// put_value X4 A3
+				new Instructions.control_call("p", 3)														// call p/3
+			];
+
+			compareInstructionLists(expectedInstructions, queryInstructions);
 		});
 
 		/** 
@@ -63,7 +135,7 @@ describe("L1 Compiler", function(){
 		it("should compile the VariableIndependance query", function(){
 			ENV.X().set(1, new CompleteStructure("a",0,[])); 													// A1 = a
 			ENV.X().set(2, new CompleteStructure("b",0,[]));													// A2 = b
-			ENV.X().set(3, new Variable("X"));																	// A3 = X
+			ENV.X().set(3, new Variable("X", new StoreRef(ENV.X(), 3)));										// A3 = X
 
 			var queryInstructions = Compiler.CompileLoadedQuery(
 				ENV,
@@ -354,27 +426,27 @@ function compareInstructionLists(list_a, list_b) {
 		switch(actualInstruction.constructor) {
 			case Instructions.put_structure:
 			case Instructions.get_structure:
-				actualInstruction.symbol.should.equal(expectedInstruction.symbol);
-				actualInstruction.arity.should.equal(expectedInstruction.arity);
+				actualInstruction.symbol.should.equal(expectedInstruction.symbol, actualInstruction.inspect() + " should be " +  expectedInstruction.inspect());
+				actualInstruction.arity.should.equal(expectedInstruction.arity, actualInstruction.inspect() + " should be " +  expectedInstruction.inspect());
 			case Instructions.set_variable:
 			case Instructions.set_value:
 			case Instructions.unify_variable:
 			case Instructions.unify_value:
-				actualInstruction.reference.store.should.equal(expectedInstruction.reference.store);
-				actualInstruction.reference.index.should.equal(expectedInstruction.reference.index);
+				actualInstruction.reference.store.should.equal(expectedInstruction.reference.store, actualInstruction.inspect() + " should be " +  expectedInstruction.inspect());
+				actualInstruction.reference.index.should.equal(expectedInstruction.reference.index, actualInstruction.inspect() + " should be " +  expectedInstruction.inspect());
 				break ;
 			case Instructions.put_variable:
 			case Instructions.put_value:
 			case Instructions.get_variable:
 			case Instructions.get_value:
-				actualInstruction.xn.store.should.equal(expectedInstruction.xn.store);
-				actualInstruction.xn.index.should.equal(expectedInstruction.xn.index);
-				actualInstruction.ai.store.should.equal(expectedInstruction.ai.store);
-				actualInstruction.ai.index.should.equal(expectedInstruction.ai.index);
+				actualInstruction.xn.store.should.equal(expectedInstruction.xn.store, actualInstruction.inspect() + " should be " +  expectedInstruction.inspect());
+				actualInstruction.xn.index.should.equal(expectedInstruction.xn.index, actualInstruction.inspect() + " should be " +  expectedInstruction.inspect());
+				actualInstruction.ai.store.should.equal(expectedInstruction.ai.store, actualInstruction.inspect() + " should be " +  expectedInstruction.inspect());
+				actualInstruction.ai.index.should.equal(expectedInstruction.ai.index, actualInstruction.inspect() + " should be " +  expectedInstruction.inspect());
 				break ;
 			case Instructions.control_call:
-				actualInstruction.predicate.should.equal(expectedInstruction.predicate);
-				actualInstruction.arity.should.equal(expectedInstruction.arity);
+				actualInstruction.predicate.should.equal(expectedInstruction.predicate, actualInstruction.inspect() + " should be " +  expectedInstruction.inspect());
+				actualInstruction.arity.should.equal(expectedInstruction.arity, actualInstruction.inspect() + " should be " +  expectedInstruction.inspect());
 				break ;
 			case Instructions.proceed:
 				break ;

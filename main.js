@@ -24,7 +24,10 @@ var exampleNames = {
 	"main":WamBookExample,
 	"2var":UnifyTwoVariables,
 	"fail1":Failure1,
-	"vi":VariableIndependance
+	"vi":VariableIndependance,
+	"put_value":PutValueTest,
+	"put_value_fail":PutValueFailTest,
+	"deep_nesting":DeepNestingTest
 };
 
 /**
@@ -117,7 +120,7 @@ function VariableIndependance(DEBUG) {
 			 **/
 			ENV.X().set(1, new CompleteStructure("a",0,[])); 													// A1 = a
 			ENV.X().set(2, new CompleteStructure("b",0,[]));													// A2 = b
-			ENV.X().set(3, new Variable("X"));																	// A3 = X
+			ENV.X().set(3, new Variable("X", new StoreRef(ENV.X(), 3)));										// A3 = X
 			return new CompleteStructure("p", 3,[new StoreRef(ENV.X(), 1),new StoreRef(ENV.X(), 2),new StoreRef(ENV.X(), 3)]);
 		},
 		// Prepare the program.
@@ -227,6 +230,128 @@ function WamBookExample(DEBUG) {
 		}
 	);
 }
+
+/**
+ * A test to make sure that put_value instruction is used correctly.
+ * Query: 			p(A, b, A).
+ * Program: 		p(c, B, c).
+ * Expected Result: p(c, b, c).
+ **/
+function PutValueTest(DEBUG) {
+	console.log("Query Term:\t p(A, b, A).");
+	console.log("Program Term:\t p(c, B, c).");
+	var ENV = Utils.BuildAndRun(
+		DEBUG, 
+		// Prepare the query
+		function(ENV){
+			/**
+			 * Query:
+			 * ?- p(A, b, A).
+			 **/
+			ENV.X().set(1, new Variable("A", new StoreRef(ENV.X(), 1))); 									// A1 = A
+			ENV.X().set(2, new CompleteStructure("b", 0, [])); 												// A2 = b/0
+			ENV.X().set(3, new Variable("A", new StoreRef(ENV.X(), 1))); 									// A3 = A [A1]
+			return new CompleteStructure("p", 3, [new StoreRef(ENV.X(), 1), new StoreRef(ENV.X(), 2), new StoreRef(ENV.X(), 3)]);
+		},
+		// Prepare the program.
+		function(ENV){
+			/**
+			 * Program has only one fact:
+			 *		p(c, B, c).
+			 **/
+			ENV.X().set(1, new CompleteStructure("c", 0, [])); 												// A1 = c/0
+			ENV.X().set(2, new Variable("B", new StoreRef(ENV.X(), 2))); 									// A2 = B
+			ENV.X().set(3, new CompleteStructure("c", 0, [])); 												// A3 = c/0
+			return [
+				new CompleteStructure("p", 3, [new StoreRef(ENV.X(), 1), new StoreRef(ENV.X(), 2), new StoreRef(ENV.X(), 3)])
+			];
+		}
+	);
+}
+
+/**
+ * A test to make sure that put_value instruction is used correctly (by failing correctly.
+ * Query: 			p(A, b, A).
+ * Program: 		p(c, B, d).
+ * Expected Result: Failure c/0 expected d/0.
+ **/
+function PutValueFailTest(DEBUG) {
+	console.log("Query Term:\t p(A, b, A).");
+	console.log("Program Term:\t p(c, B, c).");
+	var ENV = Utils.BuildAndRun(
+		DEBUG, 
+		// Prepare the query
+		function(ENV){
+			/**
+			 * Query:
+			 * ?- p(A, b, A).
+			 **/
+			ENV.X().set(1, new Variable("A", new StoreRef(ENV.X(), 1))); 									// A1 = A
+			ENV.X().set(2, new CompleteStructure("b", 0, [])); 												// A2 = b/0
+			ENV.X().set(3, new Variable("A", new StoreRef(ENV.X(), 1))); 									// A3 = A [A1]
+			return new CompleteStructure("p", 3, [new StoreRef(ENV.X(), 1), new StoreRef(ENV.X(), 2), new StoreRef(ENV.X(), 3)]);
+		},
+		// Prepare the program.
+		function(ENV){
+			/**
+			 * Program has only one fact:
+			 *		p(c, B, c).
+			 **/
+			ENV.X().set(1, new CompleteStructure("c", 0, [])); 												// A1 = c/0
+			ENV.X().set(2, new Variable("B", new StoreRef(ENV.X(), 2))); 									// A2 = B
+			ENV.X().set(3, new CompleteStructure("d", 0, [])); 												// A3 = c/0
+			return [
+				new CompleteStructure("p", 3, [new StoreRef(ENV.X(), 1), new StoreRef(ENV.X(), 2), new StoreRef(ENV.X(), 3)])
+			];
+		}
+	);
+}
+	
+/**
+ * A test to make sure that deeply nested fields dont affect the compilers.
+ * Query: 			p(a(b(c(d(e)))), B).
+ * Program: 		p(X, a(b(c(d)))).
+ * Expected Result: Success, B = a(b(c(d)))
+ **/
+function DeepNestingTest(DEBUG) {
+	console.log("Query Term:\t p(a(b(c(d(e)))), B).");
+	console.log("Program Term:\t p(X, a(b(c(d)))).");
+	var ENV = Utils.BuildAndRun(
+		DEBUG, 
+		// Prepare the query
+		function(ENV){
+			ENV.X().set(1, new CompleteStructure("a", 1, [ new StoreRef(ENV.X(), 3) ])); 					// A1 = a(X3)
+			ENV.X().set(2, new Variable("B", new StoreRef(ENV.X(), 2))); 									// A2 = B
+			ENV.X().set(3, new CompleteStructure("b", 1, [ new StoreRef(ENV.X(), 4) ])); 					// X3 = b(X4)
+			ENV.X().set(4, new CompleteStructure("c", 1, [ new StoreRef(ENV.X(), 5) ])); 					// X4 = c(X5)
+			ENV.X().set(5, new CompleteStructure("d", 1, [ new StoreRef(ENV.X(), 6) ])); 					// X5 = d(X6)
+			ENV.X().set(6, new CompleteStructure("e", 0, [])); 												// X6 = e/0
+			return new CompleteStructure("p", 2, [new StoreRef(ENV.X(), 1), new StoreRef(ENV.X(), 2)]);
+		},
+		// Prepare the program.
+		function(ENV){
+			/**
+			 * Program has only one fact:
+			 *		p(X, a(b(c(d)))).
+			 **/
+			ENV.X().set(1, new Variable("X", new StoreRef(ENV.X(), 1) ));	 								// A1 = X
+			ENV.X().set(2, new CompleteStructure("a", 1, [ new StoreRef(ENV.X(), 3) ])); 					// A2 = a(X3)
+			ENV.X().set(3, new CompleteStructure("b", 1, [ new StoreRef(ENV.X(), 4) ])); 					// X3 = b(X4)
+			ENV.X().set(4, new CompleteStructure("c", 1, [ new StoreRef(ENV.X(), 5) ])); 					// X4 = c(X5)
+			ENV.X().set(5, new CompleteStructure("d", 0, [ ])); 											// X5 = d/0
+
+			return [
+				new CompleteStructure("p", 2, [new StoreRef(ENV.X(), 1), new StoreRef(ENV.X(), 2)])
+			];
+		}
+	);
+}
+
+
+
+
+
+
 
 
 
