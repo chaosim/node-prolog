@@ -7,7 +7,7 @@ var Instructions 		= require("../lib/instructions");
 var Compiler 			= require("../lib/compilers");
 
 /**
- * A Test Suite for The L0 WAM Compilation.
+ * A Test Suite for The L1 WAM Compilation.
  **/
 describe("L1 Compiler", function(){
 	/**
@@ -248,15 +248,15 @@ describe("L1 Compiler", function(){
 			ENV.X().set(2, new CompleteStructure("f",1,[ new StoreRef(ENV.X(), 3) ]));							// A2 = f(X3)
 			ENV.X().set(3, new CompleteStructure("c",0,[]));													// X3 = c/0
 
-			var programInstructionBounds = Compiler.CompileLoadedFact(
+			var programInstructionBounds = Compiler.CompileLoadedFacts(
 				ENV, 
-				new CompleteStructure(
+				[new CompleteStructure(
 					"p", 2, 
 					[
 						new StoreRef(ENV.X(), 1),
 						new StoreRef(ENV.X(), 2)
 					]
-				)
+				)]
 			);
 
 			// Make sure something is returned
@@ -290,16 +290,16 @@ describe("L1 Compiler", function(){
 			ENV.X().set(3, new CompleteStructure("c",0, []));													// A3 = c/0
 			ENV.X().set(4, new Variable("X", new StoreRef(ENV.X(), 4))); 										// X4 = X
 
-			var programInstructionBounds = Compiler.CompileLoadedFact(
+			var programInstructionBounds = Compiler.CompileLoadedFacts(
 				ENV, 
-				new CompleteStructure(
+				[new CompleteStructure(
 					"p", 3, 
 					[
 						new StoreRef(ENV.X(), 1),
 						new StoreRef(ENV.X(), 2),
 						new StoreRef(ENV.X(), 3)
 					]
-				)
+				)]
 			);
 
 			// Make sure something is returned
@@ -328,14 +328,14 @@ describe("L1 Compiler", function(){
 		it("should compile the UnifyTwoVariables program", function(){
 			ENV.X().set(1, new Variable("Z", new StoreRef(ENV.X(),1)));											// A1 = Z
 
-			var programInstructionBounds = Compiler.CompileLoadedFact(
+			var programInstructionBounds = Compiler.CompileLoadedFacts(
 				ENV, 
-				new CompleteStructure(
+				[new CompleteStructure(
 					"p", 1,
 					[
 						new StoreRef(ENV.X(), 1)
 					]
-				)
+				)]
 			);
 
 			// Make sure something is returned
@@ -368,16 +368,16 @@ describe("L1 Compiler", function(){
 			ENV.X().set(6, new CompleteStructure("f",1,[new StoreRef(ENV.X(), 7)]));							// X6 = F(X7)
 			ENV.X().set(7, new CompleteStructure("a",0,[]));													// X7 = a/0
 
-			var programInstructionBounds = Compiler.CompileLoadedFact(
+			var programInstructionBounds = Compiler.CompileLoadedFacts(
 				ENV, 
-				new CompleteStructure(
+				[new CompleteStructure(
 					"p", 3, 
 					[
 						new StoreRef(ENV.X(), 1),
 						new StoreRef(ENV.X(), 2),
 						new StoreRef(ENV.X(), 3)
 					]
-				)
+				)]
 			);
 
 			// Make sure something is returned

@@ -27,7 +27,8 @@ var exampleNames = {
 	"vi":VariableIndependance,
 	"put_value":PutValueTest,
 	"put_value_fail":PutValueFailTest,
-	"deep_nesting":DeepNestingTest
+	"deep_nesting":DeepNestingTest,
+	"mf1":MultiFactProgram1
 };
 
 /**
@@ -342,6 +343,70 @@ function DeepNestingTest(DEBUG) {
 
 			return [
 				new CompleteStructure("p", 2, [new StoreRef(ENV.X(), 1), new StoreRef(ENV.X(), 2)])
+			];
+		}
+	);
+}
+
+/**
+ * A test to test multiple facts in a program
+ * The program contains:
+ * a(b,c,d).
+ * b(c,d,e).
+ * c(d,e,f).
+ *
+ * The query will be:
+ * ?- b(X,Y,Z).
+ *
+ * Expected results would be:
+ * X = c, Y = d, Z = e
+ **/
+function MultiFactProgram1(DEBUG) {
+	// console.log("Query Term:\t p(a(b(c(d(e)))), B).");
+	// console.log("Program Term:\t p(X, a(b(c(d)))).");
+	var ENV = Utils.BuildAndRun(
+		DEBUG, 
+		
+		// Prepare the query:
+		function(ENV){
+			/**
+			 * Prepare the query:
+			 * ?- b(X,Y,Z).
+			 **/
+			ENV.X().set(1, new Variable("X", new StoreRef(ENV.X(), 1))); 									// A1 = X
+			ENV.X().set(2, new Variable("Y", new StoreRef(ENV.X(), 2))); 									// A2 = Y
+			ENV.X().set(3, new Variable("Z", new StoreRef(ENV.X(), 3))); 									// A3 = Z
+			return new CompleteStructure("c", 3, [new StoreRef(ENV.X(), 1), new StoreRef(ENV.X(), 2), new StoreRef(ENV.X(), 3)]);
+
+		},
+		// Prepare the program.
+		function(ENV){
+			
+			/**
+			 * First Fact: a(b,c,d).
+			 **/
+			ENV.X().set(1, new CompleteStructure("b", 0, [])); 								// A1 = b/0
+			ENV.X().set(2, new CompleteStructure("c", 0, [])); 								// A2 = c/0
+			ENV.X().set(3, new CompleteStructure("d", 0, [])); 								// A3 = d/0
+
+			/**
+			 * Second Fact: b(c,d,e).
+			 **/
+			ENV.X().set(4, new CompleteStructure("c", 0, [])); 								// A4 = c/0
+			ENV.X().set(5, new CompleteStructure("d", 0, [])); 								// A5 = d/0
+			ENV.X().set(6, new CompleteStructure("e", 0, [])); 								// A6 = e/0
+
+			/**
+			 * Third Fact: c(d,e,f).
+			 **/
+			ENV.X().set(7, new CompleteStructure("d", 0, [])); 								// A7 = d/0
+			ENV.X().set(8, new CompleteStructure("e", 0, [])); 								// A8 = e/0
+			ENV.X().set(9, new CompleteStructure("f", 0, [])); 								// A9 = f/0
+
+			return [
+				new CompleteStructure("a", 3, [new StoreRef(ENV.X(), 1), new StoreRef(ENV.X(), 2), new StoreRef(ENV.X(), 3)]),
+				new CompleteStructure("b", 3, [new StoreRef(ENV.X(), 4), new StoreRef(ENV.X(), 5), new StoreRef(ENV.X(), 6)]),
+				new CompleteStructure("c", 3, [new StoreRef(ENV.X(), 7), new StoreRef(ENV.X(), 8), new StoreRef(ENV.X(), 9)])
 			];
 		}
 	);
