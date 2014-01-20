@@ -6,6 +6,7 @@
 var Structures          = require("./lib/structures");
 var StoreRef            = Structures.StoreRef;
 var CompleteStructure   = Structures.CompleteStructure;
+var Procedure   		= Structures.Procedure;
 var Variable   			= Structures.Variable;
 var Utils 				= require("./lib/utils");
 
@@ -28,7 +29,8 @@ var exampleNames = {
 	"put_value":PutValueTest,
 	"put_value_fail":PutValueFailTest,
 	"deep_nesting":DeepNestingTest,
-	"mf1":MultiFactProgram1
+	"mf1":MultiFactProgram1,
+	"l2":FirstL2Program
 };
 
 /**
@@ -356,14 +358,14 @@ function DeepNestingTest(DEBUG) {
  * c(d,e,f).
  *
  * The query will be:
- * ?- b(X,Y,Z).
+ * ?- c(X,Y,Z).
  *
  * Expected results would be:
  * X = c, Y = d, Z = e
  **/
 function MultiFactProgram1(DEBUG) {
-	// console.log("Query Term:\t p(a(b(c(d(e)))), B).");
-	// console.log("Program Term:\t p(X, a(b(c(d)))).");
+	console.log("Query Term:\tc(X,Y,Z).");
+	console.log("Program Terms:\n\t\ta(b,c,d). \n\t\tb(c,d,e). \n\t\tc(d,e,f).");
 	var ENV = Utils.BuildAndRun(
 		DEBUG, 
 		
@@ -371,7 +373,7 @@ function MultiFactProgram1(DEBUG) {
 		function(ENV){
 			/**
 			 * Prepare the query:
-			 * ?- b(X,Y,Z).
+			 * ?- c(X,Y,Z).
 			 **/
 			ENV.X().set(1, new Variable("X", new StoreRef(ENV.X(), 1))); 									// A1 = X
 			ENV.X().set(2, new Variable("Y", new StoreRef(ENV.X(), 2))); 									// A2 = Y
@@ -412,7 +414,69 @@ function MultiFactProgram1(DEBUG) {
 	);
 }
 
+/**
+ * The first attempted L2 program.
+ * This program will allow rules.
+ *
+ * The query will be:
+ *		?- a(X,Y,Z).
+ *
+ * The program will be:
+ * 		a(X,Y,Z) :- b(X,Y), c(Y,Z).
+ *		b(a,b).
+ *		c(b,c).
+ *
+ * The expected result is:
+ *		X = a, Y = b, Z = c
+ **/
+function FirstL2Program(DEBUG) {
+	var ENV = Utils.BuildAndRun(
+		DEBUG, 
+		
+		// Prepare the query:
+		function(ENV){
+			/**
+			 * Prepare the query:
+			 * ?- a(X,Y,Z).
+			 **/
+			ENV.X().set(1, new Variable("X", new StoreRef(ENV.X(), 1))); 									// A1 = X
+			ENV.X().set(2, new Variable("Y", new StoreRef(ENV.X(), 2))); 									// A2 = Y
+			ENV.X().set(3, new Variable("Z", new StoreRef(ENV.X(), 3))); 									// A3 = Z
+			return new CompleteStructure("a", 3, [new StoreRef(ENV.X(), 1), new StoreRef(ENV.X(), 2), new StoreRef(ENV.X(), 3)]);
 
+		},
+		// Prepare the program.
+		function(ENV){
+			
+			/** Load up the variables **/
+			ENV.X().set(1, new Variable("X", new StoreRef(ENV.X(), 1)));
+			ENV.X().set(2, new Variable("Y", new StoreRef(ENV.X(), 2)));
+			ENV.X().set(3, new Variable("Z", new StoreRef(ENV.X(), 3)));
+
+			/** Load up constants used by the facts **/
+			ENV.X().set(4, new CompleteStructure("a", 0, [])); 
+			ENV.X().set(5, new CompleteStructure("b", 0, []));
+			ENV.X().set(6, new CompleteStructure("c", 0, [])); 
+
+			/** 
+			 * The rule a(X,Y,Z) :- b(X,Y), c(Y,Z);
+			 **/
+			var rule = new Procedure(
+				new CompleteStructure("a", 3, [new StoreRef(ENV.X(), 1), new StoreRef(ENV.X(), 2), new StoreRef(ENV.X(), 3)]),
+				[
+					new CompleteStructure("b", 2, [new StoreRef(ENV.X(), 1), new StoreRef(ENV.X(), 2)]),
+					new CompleteStructure("c", 2, [new StoreRef(ENV.X(), 2), new StoreRef(ENV.X(), 3)]),
+				]
+			);
+
+			return [
+				rule,
+				new CompleteStructure("b", 2, [ new StoreRef(ENV.X(), 4), new StoreRef(ENV.X(), 5) ]),
+				new CompleteStructure("c", 2, [ new StoreRef(ENV.X(), 5), new StoreRef(ENV.X(), 6) ]),
+			];
+		}
+	);
+}
 
 
 
