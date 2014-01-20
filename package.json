@@ -21,6 +21,12 @@
     "mocha":"*",
     "sync-prompt":"*",
     "should":"*"
-  },  
+  },
+  "devDependencies": {
+    "grunt": "~0.4.2",
+    "grunt-mocha-cli": "~1.5.0",
+    "grunt-contrib-watch": "~0.5.3",
+    "grunt-contrib-jshint": "~0.6.4"
+  },
   "license": "MIT"
 }
